@@ -16,10 +16,14 @@ html {
     color: red;
 }
 
-#remove-website {
-    margin-left: auto;
-}
-
 #website-name {
     margin: 5px 10px;
+}
+
+#website-time {
+    
+}
+
+#remove-website {
+    margin-left: auto;
 }

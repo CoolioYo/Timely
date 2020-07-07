@@ -21,12 +21,17 @@ document.addEventListener("DOMContentLoaded", function() {
             name.appendChild(document.createTextNode(url));
             name.id = "website-name";
 
+            var time = document.createElement("p"); // Time spent
+            time.appendChild(document.createTextNode("0"));
+            time.id = "website-time";
+
             var remove = document.createElement("button"); // Remove button
             remove.appendChild(document.createTextNode("x"));
             remove.id = "remove-website";
 
             container.appendChild(favicon);
             container.appendChild(name);
+            container.appendChild(time);
             container.appendChild(remove);
 
             // Remove website from tracking list
