@@ -1,19 +1,29 @@
 var websites = [];
 
 document.addEventListener("DOMContentLoaded", function() {
-    var addWebsite = document.getElementById("add-website");
+    var addWebsite = document.getElementById("add-website"); // Add website button
 
+    // Add a website to track
     addWebsite.addEventListener("click", function() {
-        var websiteInput = document.getElementById("website-input").value; 
+        // Parse URL
+        var websiteInput = document.getElementById("website-input").value;
+        websiteInput = new URL(websiteInput).host;
 
-        var newWebsite = document.createElement("p");
-        var websiteText = document.createTextNode(websiteInput);
-        newWebsite.appendChild(websiteText);
+        // Check if the website is already being tracked
+        if(!websites.includes(websiteInput)){
+            var newWebsite = document.createElement("p");
+            var websiteText = document.createTextNode(websiteInput);
+            newWebsite.appendChild(websiteText);
+    
+            var websitesTracked = document.getElementById("websites-tracked");
+            websitesTracked.appendChild(newWebsite);
+    
+            websites.push(websiteInput);
+            console.log(websiteInput + " was added");
+            document.getElementById("website-input-error").innerHTML = ""; 
 
-        var websitesTracked = document.getElementById("websites-tracked");
-        websitesTracked.appendChild(newWebsite);
-
-        websites.push(websiteInput);
-        console.log(websiteInput + " was added");
+        }else{
+            document.getElementById("website-input-error").innerHTML = "You are already tracking this site";
+        }
     });
 });
