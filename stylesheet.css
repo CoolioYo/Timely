@@ -1,0 +1,25 @@
+html {
+    width: 420px;
+}
+
+.flex {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+#search-bar {
+    width: 300px;
+}
+
+#input-error {
+    color: red;
+}
+
+#remove-website {
+    margin-left: auto;
+}
+
+#website-name {
+    margin: 5px 10px;
+}
