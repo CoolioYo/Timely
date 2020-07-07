@@ -17,8 +17,13 @@ document.addEventListener("DOMContentLoaded", function() {
     
             var websitesTracked = document.getElementById("websites-tracked");
             websitesTracked.appendChild(newWebsite);
-    
+            
             websites.push(websiteInput);
+
+            chrome.runtime.sendMessage({
+                msg: websiteInput
+            });
+
             console.log(websiteInput + " was added");
             document.getElementById("website-input-error").innerHTML = ""; 
 
