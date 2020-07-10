@@ -22,6 +22,10 @@ function clearStorage(){
 
 // Loads saved websites
 function loadWebsites(){
+    chrome.runtime.sendMessage({
+        message: "load"
+    });
+
     chrome.storage.local.get({websiteObjects:[]},function(data){
         websiteObjects = data.websiteObjects;
 

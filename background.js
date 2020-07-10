@@ -3,8 +3,6 @@ var websiteObjects = [];
 var currentTab = "empty url";
 var previousTab = "empty url";
 
-var windowActive = true;
-
 function Website(url, time, formattedTime, start) {
     this.url = url;
     this.time = time;
@@ -58,23 +56,36 @@ function stopTimer(Website){
 // Handle messages from popup.js
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if(request.message == "add"){
+        // Add website
         websiteObjects.push(new Website(request.sentURL, 0, "0s", 0));
         console.log(request.sentURL, "was added");
         checkTab();
     }else if(request.message == "remove"){
+        // Remove website
         for(var i = 0; i < websiteObjects.length; i++){
             if(websiteObjects[i].url = request.sentURL){
                 websiteObjects.splice(i, 1);
                 break;
             }
         }
+    }else if (request.message = "load"){
+        // Load data
+        var currentWebsite = getCurrentWebsite();
+
+        if(currentWebsite != null){
+            stopTimer(currentWebsite);
+            startTimer(currentWebsite);
+        }
+
     }else if(request.message == "reset"){
+        // Reset data
         websiteObjects = [];
     }
 
     saveWebsites();
 });
 
+// Check current tab at the start of the program
 checkTab();
 
 // Get the URL of the current tab
@@ -84,10 +95,14 @@ function getTabURL(callback){
         active: true
     
     }, function(tabs) {
-        var tab = tabs[0];
-        var url = new URL(tab.url).host;
-
-        callback(url);
+        try {
+            var tab = tabs[0];
+            var url = new URL(tab.url).host;
+    
+            callback(url);
+        } catch (error) {
+            console.log("Could not get tab url");
+        }
     });
 }
 
@@ -97,7 +112,7 @@ function checkTab(){
         // If the current tab is different from the previous tab
         if(currentTab != url){
             previousTab = currentTab;
-            console.log("Previous tab: " + previousTab);
+            //console.log("Previous tab: " + previousTab);
 
             // Stop timer if previous tab is being tracked
             for(var i = 0; i < websiteObjects.length; i++){
@@ -116,8 +131,22 @@ function checkTab(){
         }
 
         currentTab = url;
-        console.log("Current tab: " + currentTab);
+        //console.log("Current tab: " + currentTab);
     });
+}
+
+// Returns website object from currentTab
+function getCurrentWebsite(){
+    var currentWebsite;
+
+    for(var i = 0; i < websiteObjects.length; i++){
+        if(websiteObjects[i].url == currentTab){
+            console.log("Current tab: " + currentTab);
+            currentWebsite = websiteObjects[i];
+        }
+    }
+
+    return currentWebsite;
 }
 
 // Get URL of clicked tab
@@ -142,6 +171,8 @@ chrome.tabs.onUpdated.addListener(function(tabid, changeinfo, tab) {
 
 // Check focus of window
 chrome.windows.onFocusChanged.addListener(function(windowId) {
+    var windowActive = true;
+
     if (windowId === -1) {
         windowActive = false;
         console.log("window minimized");
@@ -157,26 +188,17 @@ chrome.windows.onFocusChanged.addListener(function(windowId) {
         });
     }
 
-    getTabURL(function(url) {
-        if(url == currentTab){
-            var currentWebsite;
+    // Checks if current tab is being tracked
+    var currentWebsite = getCurrentWebsite();
 
-            // Finds website object with currenTab URL
-            for(var i = 0; i < websiteObjects.length; i++){
-                if(websiteObjects[i].url == currentTab){
-                    currentWebsite = websiteObjects[i];
-                    break;
-                }
-            }
-
-            // Updates timer based on window state
-            if(!windowActive){
-                console.log("STOPPING TIMER");
-                stopTimer(currentWebsite);
-            }else{
-                console.log("STARTING TIMER");
-                startTimer(currentWebsite);
-            }
+    if(currentWebsite != null){
+        // Updates timer based on window state
+        if(!windowActive){
+            console.log("STOPPING TIMER");
+            stopTimer(currentWebsite);
+        }else{
+            console.log("STARTING TIMER");
+            startTimer(currentWebsite);
         }
-    });
+    }
 });
