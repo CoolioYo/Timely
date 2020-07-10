@@ -12,21 +12,22 @@ function clearStorage(){
     chrome.storage.sync.clear();
     websites = [];
 
+    chrome.runtime.sendMessage({
+        message: "reset"
+    });
+
     document.getElementById("websites-tracked").innerHTML = '';
     document.getElementById("input-error").innerHTML = "";
-
-    saveWebsites();
 }
 
 // Loads saved websites
 function loadWebsites(){
-    chrome.storage.local.get({websites:[]},function(data){
-        websites = data.websites;
-        console.log(websites);
+    chrome.storage.local.get({websiteObjects:[]},function(data){
+        websiteObjects = data.websiteObjects;
 
         // Display all loaded websites
-        for(var i = 0; i < websites.length; i++){
-            displayWebsite(websites[i]);
+        for(var i = 0; i < websiteObjects.length; i++){
+            displayWebsite(websiteObjects[i].url, websiteObjects[i].time);
         }
     });
 }
@@ -41,8 +42,7 @@ function addWebsite(){
     if(!websites.includes(url)){
         websites.push(url);
 
-        displayWebsite(url);
-        saveWebsites();
+        displayWebsite(url, 0);
     
         // Send URL to background.js
         chrome.runtime.sendMessage({
@@ -58,7 +58,7 @@ function addWebsite(){
 }
 
 // Displays website in pop-up
-function displayWebsite(url){
+function displayWebsite(url, timeSpent){
     var container = document.createElement("div"); // Div for website elements
     container.id = url;
     container.classList.add("flex");
@@ -71,7 +71,7 @@ function displayWebsite(url){
     name.id = "website-name";
 
     var time = document.createElement("p"); // Time spent
-    time.appendChild(document.createTextNode("0"));
+    time.appendChild(document.createTextNode(timeSpent));
     time.id = "website-time";
 
     var remove = document.createElement("button"); // Remove button
@@ -89,14 +89,13 @@ function displayWebsite(url){
 
         for(var i = 0; i < websites.length; i++){
             if(websites[i] == toBeRemoved){
-                websites.splice(i, 1);
-
                 chrome.runtime.sendMessage({
                     message: "remove",
                     sentURL: url
                 });
 
-                saveWebsites();
+                websites.splice(i, 1);
+                break;
             }
         }
 
@@ -106,22 +105,3 @@ function displayWebsite(url){
     var websitesTracked = document.getElementById("websites-tracked");
     websitesTracked.appendChild(container);
 }
-
-// Saves websites array with chrome.storage
-function saveWebsites(callback){
-    chrome.storage.local.set({websites}, function(){
-        if(typeof callback === 'function'){
-            //If there was no callback provided, don't try to call it.
-            callback();
-        }
-    });
-}
-
-// Handle messages from background.js
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    if(request.message = "update time"){
-        var time = document.getElementById("website-time");
-        time.nodeValue = request.sentTime;
-        saveWebsites();
-    }
-});

@@ -1,7 +1,21 @@
+var websiteObjects = [];
+var currentTab = "empty url";
+var previousTab = "empty url";
+
 function Website(url, time, start) {
     this.url = url;
     this.time = time;
     this.start = start;
+}
+
+// Saves websites array with chrome.storage
+function saveWebsites(callback){
+    chrome.storage.local.set({websiteObjects}, function(){
+        if(typeof callback === 'function'){
+            //If there was no callback provided, don't try to call it.
+            callback();
+        }
+    });
 }
 
 function startTimer(Website){
@@ -10,10 +24,10 @@ function startTimer(Website){
 }
 
 function stopTimer(Website){
-    Website.time += new Date() - Website.start;
+    var timeNum = new Date() - Website.start;
 
     // Format time
-    var seconds = Math.round(Website.time / 1000);
+    var seconds = Math.round(timeNum / 1000);
     var minutes = Math.floor(seconds / 60);
     var hours = Math.floor(minutes / 60);
     minutes %= 60;
@@ -31,33 +45,36 @@ function stopTimer(Website){
         time += seconds + "s"
     } 
 
+    Website.time = time;
     console.log("*" + Website.url + ": " + time);
 
-    // Send time to popup.js
-    chrome.runtime.sendMessage({
-        message: "update time",
-        sentID: url,
-        sentTime: time,
-    });
+    saveWebsites();
 }
-
-var websites = [];
-var currentTab = "empty url";
-var previousTab = "empty url";
 
 // Handle messages from popup.js
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if(request.message == "add"){
-        websites.push(new Website(request.sentURL, 0, 0));
+        websiteObjects.push(new Website(request.sentURL, 0, 0));
         console.log(request.sentURL, "was added");
         checkTab();
     }else if(request.message == "remove"){
-        websites.splice(websites.indexOf(request.sentURL), 1);
+        alert("remove");
+        for(var i = 0; i < websiteObjects.length; i++){
+            if(websiteObjects[i].url = request.sentURL){
+                websiteObjects.splice(i, 1);
+                break;
+            }
+        }
+    }else if(request.message == "reset"){
+        websiteObjects = [];
     }
+
+    saveWebsites();
 });
 
 checkTab();
 
+// Get the URL of the current tab
 function getTabURL(callback){
     chrome.tabs.query({
         currentWindow: true,
@@ -80,17 +97,17 @@ function checkTab(){
             console.log("Previous tab: " + previousTab);
 
             // Stop timer if previous tab is being tracked
-            for(var i = 0; i < websites.length; i++){
-                if(websites[i].url == previousTab){
-                    stopTimer(websites[i]);
+            for(var i = 0; i < websiteObjects.length; i++){
+                if(websiteObjects[i].url == previousTab){
+                    stopTimer(websiteObjects[i]);
                 }
             }
         }
 
         // Start timer if current tab is being tracked
-        for(var i = 0; i < websites.length; i++){
-            if(websites[i].url == url){
-                startTimer(websites[i]);
+        for(var i = 0; i < websiteObjects.length; i++){
+            if(websiteObjects[i].url == url){
+                startTimer(websiteObjects[i]);
                 break;
             }
         }
@@ -102,15 +119,18 @@ function checkTab(){
 
 // Get URL of clicked tab
 chrome.tabs.onActivated.addListener(function(activeInfo) {
-    console.log("Tab switched");
-    checkTab();
+    getTabURL(function(url) {
+        if(url != currentTab){
+            console.log("Tab switched");
+            checkTab();
+        }
+    });
 });
 
 var count = 0;
 
 // Get URL if tab changes sites
 chrome.tabs.onUpdated.addListener(function(tabid, changeinfo, tab) {
-
     getTabURL(function(url) {
         if(url != currentTab && changeinfo.status == "complete"){
             console.log("Tab updated");
