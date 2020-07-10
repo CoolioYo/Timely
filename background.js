@@ -6,7 +6,7 @@ function Website(url, time, start) {
 
 function startTimer(Website){
     Website.start = new Date();
-    console.log(Website.url + " timer started");
+    console.log("*" + Website.url + " timer started");
 }
 
 function stopTimer(Website){
@@ -31,7 +31,7 @@ function stopTimer(Website){
         time += seconds + "s"
     } 
 
-    console.log(Website.url + ": " + time);
+    console.log("*" + Website.url + ": " + time);
 }
 
 var websites = [];
@@ -42,20 +42,33 @@ var previousTab = "empty url";
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     websites.push(new Website(request.msg, 0, 0));
     console.log(request.msg, "was added");
-    getTabURL();
+    checkTab();
 });
 
-getTabURL();
+checkTab();
 
-// Get URL of current tab and track time
 function getTabURL(){
+    chrome.tabs.query({
+        currentWindow: true,
+        active: true
+    
+    }, function(tabs) {
+        var tab = tabs[0];
+        url = new URL(tab.url).host;
+
+        return url;
+    });
+}
+
+// Check if the tab is being tracked
+function checkTab(){
+
     chrome.tabs.query({
         currentWindow: true,
         active: true
 
     }, function(tabs) {
         var tab = tabs[0];
-        console.log("URL: " + tab.url);
         var url = new URL(tab.url).host;
 
         // If the current tab is different from the previous tab
@@ -70,26 +83,32 @@ function getTabURL(){
                 }
             }
         }
-        currentTab = url;
-        console.log("Current tab: " + currentTab);
 
         // Start timer if current tab is being tracked
         for(var i = 0; i < websites.length; i++){
-            if(websites[i].url == currentTab){
+            if(websites[i].url == url){
                 startTimer(websites[i]);
+                break;
             }
         }
+
+        currentTab = url;
+        console.log("Current tab: " + currentTab);
     });
 }
 
 // Get URL of clicked tab
 chrome.tabs.onActivated.addListener(function(activeInfo) {
-    getTabURL();
+    console.log("Tab switched");
+    checkTab();
 });
 
+var count = 0;
+
 // Get URL if tab changes sites
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-    // console.log(tabId);
-    // console.log(changeInfo);
-    getTabURL();
+chrome.tabs.onUpdated.addListener(function(tabid, changeinfo, tab) {
+    if(changeinfo.status == "complete"){
+        console.log("Tab updated");
+        checkTab();
+    }
 });

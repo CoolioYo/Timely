@@ -3,7 +3,7 @@
     "name": "Timely",
     "description": "Tracks the amount of time spent on specific websites",
     "version": "1.0.0",
-    "permissions": ["tabs", "activeTab", "background"],
+    "permissions": ["tabs", "activeTab", "background", "storage"],
 
     "background":{
         "scripts": ["background.js"]
