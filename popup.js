@@ -3,8 +3,8 @@ var websites = [];
 document.addEventListener("DOMContentLoaded", function() {
     loadWebsites();
 
-    document.getElementById("reset").addEventListener("click", clearStorage);
-    document.getElementById("add-website").addEventListener("click", addWebsite);
+    document.getElementById("reset").addEventListener("click", clearStorage); // Reset button
+    document.getElementById("add-website").addEventListener("click", addWebsite); // Add website button
 });
 
 // Clears saved websites
@@ -12,9 +12,7 @@ function clearStorage(){
     chrome.storage.sync.clear();
     websites = [];
 
-    const myNode = document.getElementById("websites-tracked");
-    myNode.innerHTML = '';
-
+    document.getElementById("websites-tracked").innerHTML = '';
     document.getElementById("input-error").innerHTML = "";
 
     saveWebsites();
@@ -41,15 +39,15 @@ function addWebsite(){
 
     // Check if the website is already being tracked
     if(!websites.includes(url)){
-        displayWebsite(url);
-
         websites.push(url);
 
+        displayWebsite(url);
         saveWebsites();
     
         // Send URL to background.js
         chrome.runtime.sendMessage({
-            msg: url
+            message: "add",
+            sentURL: url
         });
     
         console.log(url + " was added");
@@ -62,6 +60,7 @@ function addWebsite(){
 // Displays website in pop-up
 function displayWebsite(url){
     var container = document.createElement("div"); // Div for website elements
+    container.id = url;
     container.classList.add("flex");
 
     var favicon = document.createElement("img"); // Favicon
@@ -91,6 +90,12 @@ function displayWebsite(url){
         for(var i = 0; i < websites.length; i++){
             if(websites[i] == toBeRemoved){
                 websites.splice(i, 1);
+
+                chrome.runtime.sendMessage({
+                    message: "remove",
+                    sentURL: url
+                });
+
                 saveWebsites();
             }
         }
@@ -111,3 +116,12 @@ function saveWebsites(callback){
         }
     });
 }
+
+// Handle messages from background.js
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    if(request.message = "update time"){
+        var time = document.getElementById("website-time");
+        time.nodeValue = request.sentTime;
+        saveWebsites();
+    }
+});

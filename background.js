@@ -32,45 +32,48 @@ function stopTimer(Website){
     } 
 
     console.log("*" + Website.url + ": " + time);
+
+    // Send time to popup.js
+    chrome.runtime.sendMessage({
+        message: "update time",
+        sentID: url,
+        sentTime: time,
+    });
 }
 
 var websites = [];
 var currentTab = "empty url";
 var previousTab = "empty url";
 
-// Get tracked websites from popup.js
+// Handle messages from popup.js
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    websites.push(new Website(request.msg, 0, 0));
-    console.log(request.msg, "was added");
-    checkTab();
+    if(request.message == "add"){
+        websites.push(new Website(request.sentURL, 0, 0));
+        console.log(request.sentURL, "was added");
+        checkTab();
+    }else if(request.message == "remove"){
+        websites.splice(websites.indexOf(request.sentURL), 1);
+    }
 });
 
 checkTab();
 
-function getTabURL(){
+function getTabURL(callback){
     chrome.tabs.query({
         currentWindow: true,
         active: true
     
     }, function(tabs) {
         var tab = tabs[0];
-        url = new URL(tab.url).host;
+        var url = new URL(tab.url).host;
 
-        return url;
+        callback(url);
     });
 }
 
 // Check if the tab is being tracked
 function checkTab(){
-
-    chrome.tabs.query({
-        currentWindow: true,
-        active: true
-
-    }, function(tabs) {
-        var tab = tabs[0];
-        var url = new URL(tab.url).host;
-
+    getTabURL(function(url) {
         // If the current tab is different from the previous tab
         if(currentTab != url){
             previousTab = currentTab;
@@ -107,8 +110,11 @@ var count = 0;
 
 // Get URL if tab changes sites
 chrome.tabs.onUpdated.addListener(function(tabid, changeinfo, tab) {
-    if(changeinfo.status == "complete"){
-        console.log("Tab updated");
-        checkTab();
-    }
+
+    getTabURL(function(url) {
+        if(url != currentTab && changeinfo.status == "complete"){
+            console.log("Tab updated");
+            checkTab();
+        }
+    });
 });
