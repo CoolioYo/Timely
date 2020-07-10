@@ -1,4 +1,4 @@
-var websites = [];
+var websites = []; // Array of website URLS being tracked
 
 document.addEventListener("DOMContentLoaded", function() {
     loadWebsites();
@@ -27,7 +27,7 @@ function loadWebsites(){
 
         // Display all loaded websites
         for(var i = 0; i < websiteObjects.length; i++){
-            displayWebsite(websiteObjects[i].url, websiteObjects[i].time);
+            displayWebsite(websiteObjects[i].url, websiteObjects[i].formattedTime);
         }
     });
 }
@@ -58,7 +58,7 @@ function addWebsite(){
 }
 
 // Displays website in pop-up
-function displayWebsite(url, timeSpent){
+function displayWebsite(url, formattedTime){
     var container = document.createElement("div"); // Div for website elements
     container.id = url;
     container.classList.add("flex");
@@ -71,7 +71,7 @@ function displayWebsite(url, timeSpent){
     name.id = "website-name";
 
     var time = document.createElement("p"); // Time spent
-    time.appendChild(document.createTextNode(timeSpent));
+    time.appendChild(document.createTextNode(formattedTime));
     time.id = "website-time";
 
     var remove = document.createElement("button"); // Remove button

@@ -1,10 +1,14 @@
 var websiteObjects = [];
+
 var currentTab = "empty url";
 var previousTab = "empty url";
 
-function Website(url, time, start) {
+var windowActive = true;
+
+function Website(url, time, formattedTime, start) {
     this.url = url;
     this.time = time;
+    this.formattedTime = formattedTime;
     this.start = start;
 }
 
@@ -24,10 +28,10 @@ function startTimer(Website){
 }
 
 function stopTimer(Website){
-    var timeNum = new Date() - Website.start;
+    Website.time += new Date() - Website.start;
 
     // Format time
-    var seconds = Math.round(timeNum / 1000);
+    var seconds = Math.round(Website.time / 1000);
     var minutes = Math.floor(seconds / 60);
     var hours = Math.floor(minutes / 60);
     minutes %= 60;
@@ -43,9 +47,9 @@ function stopTimer(Website){
     }
     if(seconds > 0){
         time += seconds + "s"
-    } 
+    }
 
-    Website.time = time;
+    Website.formattedTime = time;
     console.log("*" + Website.url + ": " + time);
 
     saveWebsites();
@@ -54,11 +58,10 @@ function stopTimer(Website){
 // Handle messages from popup.js
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if(request.message == "add"){
-        websiteObjects.push(new Website(request.sentURL, 0, 0));
+        websiteObjects.push(new Website(request.sentURL, 0, "0s", 0));
         console.log(request.sentURL, "was added");
         checkTab();
     }else if(request.message == "remove"){
-        alert("remove");
         for(var i = 0; i < websiteObjects.length; i++){
             if(websiteObjects[i].url = request.sentURL){
                 websiteObjects.splice(i, 1);
@@ -127,14 +130,53 @@ chrome.tabs.onActivated.addListener(function(activeInfo) {
     });
 });
 
-var count = 0;
-
 // Get URL if tab changes sites
 chrome.tabs.onUpdated.addListener(function(tabid, changeinfo, tab) {
     getTabURL(function(url) {
         if(url != currentTab && changeinfo.status == "complete"){
             console.log("Tab updated");
             checkTab();
+        }
+    });
+});
+
+// Check focus of window
+chrome.windows.onFocusChanged.addListener(function(windowId) {
+    if (windowId === -1) {
+        windowActive = false;
+        console.log("window minimized");
+    } else {
+        chrome.windows.get(windowId, function(chromeWindow) {
+            if (chromeWindow.state === "minimized") {
+                windowActive = false;
+                console.log("window minimized");
+            } else {
+                windowActive = true;
+                console.log("window active");
+            }
+        });
+    }
+
+    getTabURL(function(url) {
+        if(url == currentTab){
+            var currentWebsite;
+
+            // Finds website object with currenTab URL
+            for(var i = 0; i < websiteObjects.length; i++){
+                if(websiteObjects[i].url == currentTab){
+                    currentWebsite = websiteObjects[i];
+                    break;
+                }
+            }
+
+            // Updates timer based on window state
+            if(!windowActive){
+                console.log("STOPPING TIMER");
+                stopTimer(currentWebsite);
+            }else{
+                console.log("STARTING TIMER");
+                startTimer(currentWebsite);
+            }
         }
     });
 });
