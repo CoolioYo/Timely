@@ -12,7 +12,7 @@ function Website(url, time, formattedTime, start) {
 
 // Saves websites array with chrome.storage
 function saveWebsites(callback){
-    chrome.storage.local.set({websiteObjects}, function(){
+    chrome.storage.sync.set({websiteObjects}, function(){
         if(typeof callback === 'function'){
             //If there was no callback provided, don't try to call it.
             callback();
@@ -49,8 +49,6 @@ function stopTimer(Website){
 
     Website.formattedTime = time;
     console.log("*" + Website.url + ": " + time);
-
-    saveWebsites();
 }
 
 // Handle messages from popup.js
@@ -83,6 +81,12 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     }
 
     saveWebsites();
+
+    if(request.message == "load"){
+        chrome.runtime.sendMessage({
+            message: "load"
+        })
+    }
 });
 
 // Check current tab at the start of the program

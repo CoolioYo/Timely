@@ -20,45 +20,60 @@ function clearStorage(){
     document.getElementById("input-error").innerHTML = "";
 }
 
-// Loads saved websites
+// Update times when pop-up is opened
 function loadWebsites(){
     chrome.runtime.sendMessage({
         message: "load"
     });
-
-    chrome.storage.local.get({websiteObjects:[]},function(data){
-        websiteObjects = data.websiteObjects;
-        
-        // Display all loaded websites
-        for(var i = 0; i < websiteObjects.length; i++){
-            displayWebsite(websiteObjects[i].url, websiteObjects[i].formattedTime);
-            websites.push(websiteObjects[i].url);
-        }
-    });
 }
+
+// Loads saved websites
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    if(request.message == "load"){
+        chrome.storage.sync.get({websiteObjects:[]}, function(data){
+            websiteObjects = data.websiteObjects;
+            
+            // Display all loaded websites
+            for(var i = 0; i < websiteObjects.length; i++){
+                displayWebsite(websiteObjects[i].url, websiteObjects[i].formattedTime);
+                websites.push(websiteObjects[i].url);
+            }
+        });
+    }
+});
 
 // Add a website to be tracked
 function addWebsite(){
-    // Parse URL
-    var url = document.getElementById("search-bar").value;
-    url = new URL(url).host;
+    var errorMessage = document.getElementById("input-error");
 
-    // Check if the website is already being tracked
-    if(!websites.includes(url)){
-        websites.push(url);
+    try {
+        // Parse URL
+        var searchBar = document.getElementById("search-bar");
+        var url = searchBar.value;
+        url = new URL(url).host;
 
-        displayWebsite(url, 0);
-    
-        // Send URL to background.js
-        chrome.runtime.sendMessage({
-            message: "add",
-            sentURL: url
-        });
-    
-        console.log(url + " was added");
-        document.getElementById("input-error").innerHTML = ""; 
-    }else{
-        document.getElementById("input-error").innerHTML = "You are already tracking this site";
+        // Check if the website is already being tracked
+        if(!websites.includes(url) && url){
+            websites.push(url);
+
+            displayWebsite(url, "0s");
+        
+            // Send URL to background.js
+            chrome.runtime.sendMessage({
+                message: "add",
+                sentURL: url
+            });
+        
+            searchBar.value = "";
+            errorMessage.innerHTML = "";
+
+            console.log(url + " was added");
+        }else{
+            errorMessage.innerHTML = "You are already tracking this site";
+            //document.getElementById("input-error").innerHTML = "You are already tracking this site";
+        }
+    } catch (error) {
+        errorMessage.innerHTML = "Invalid URL";
     }
 }
 
@@ -69,6 +84,7 @@ function displayWebsite(url, formattedTime){
 
     var favicon = document.createElement("img"); // Favicon
     favicon.src = "https://www.google.com/s2/favicons?domain="+url;
+    favicon.classList.add("website-favicon");
 
     var name = document.createElement("p"); // Website name
     name.appendChild(document.createTextNode(url));
@@ -82,6 +98,7 @@ function displayWebsite(url, formattedTime){
     remove.appendChild(document.createTextNode("x"));
     remove.classList.add("remove-website");
 
+    // Adding elements to container div
     container.appendChild(favicon);
     container.appendChild(name);
     container.appendChild(time);
@@ -107,6 +124,7 @@ function displayWebsite(url, formattedTime){
         this.parentNode.remove();
     });
 
+    // Adding container to pop-up
     var websitesTracked = document.getElementById("websites-tracked");
     websitesTracked.appendChild(container);
 }

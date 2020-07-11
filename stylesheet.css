@@ -13,7 +13,7 @@ html {
     width: 300px;
 }
 
-.input-error {
+#input-error {
     color: red;
 }
 
