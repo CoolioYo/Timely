@@ -28,10 +28,11 @@ function loadWebsites(){
 
     chrome.storage.local.get({websiteObjects:[]},function(data){
         websiteObjects = data.websiteObjects;
-
+        
         // Display all loaded websites
         for(var i = 0; i < websiteObjects.length; i++){
             displayWebsite(websiteObjects[i].url, websiteObjects[i].formattedTime);
+            websites.push(websiteObjects[i].url);
         }
     });
 }
@@ -64,7 +65,6 @@ function addWebsite(){
 // Displays website in pop-up
 function displayWebsite(url, formattedTime){
     var container = document.createElement("div"); // Div for website elements
-    container.id = url;
     container.classList.add("flex");
 
     var favicon = document.createElement("img"); // Favicon
@@ -72,15 +72,15 @@ function displayWebsite(url, formattedTime){
 
     var name = document.createElement("p"); // Website name
     name.appendChild(document.createTextNode(url));
-    name.id = "website-name";
+    name.classList.add("website-name");
 
     var time = document.createElement("p"); // Time spent
     time.appendChild(document.createTextNode(formattedTime));
-    time.id = "website-time";
+    time.classList.add("website-time");
 
     var remove = document.createElement("button"); // Remove button
     remove.appendChild(document.createTextNode("x"));
-    remove.id = "remove-website";
+    remove.classList.add("remove-website");
 
     container.appendChild(favicon);
     container.appendChild(name);
@@ -89,10 +89,11 @@ function displayWebsite(url, formattedTime){
 
     // Remove website from tracking list
     remove.addEventListener("click", function () {
-        var toBeRemoved = this.parentElement.children[1].textContent;
+        var toBeRemoved = this.parentElement.children[1].textContent; // Set to URL
 
         for(var i = 0; i < websites.length; i++){
             if(websites[i] == toBeRemoved){
+                console.log(toBeRemoved + " was removed");
                 chrome.runtime.sendMessage({
                     message: "remove",
                     sentURL: url

@@ -68,7 +68,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                 break;
             }
         }
-    }else if (request.message = "load"){
+    }else if (request.message == "load"){
         // Load data
         var currentWebsite = getCurrentWebsite();
 

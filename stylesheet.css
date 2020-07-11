@@ -6,24 +6,26 @@ html {
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: flex-end;
 }
 
 #search-bar {
     width: 300px;
 }
 
-#input-error {
+.input-error {
     color: red;
 }
 
-#website-name {
+.website-name {
     margin: 5px 10px;
+    margin-right: auto;
 }
 
-#website-time {
-    
+.website-time {
+    margin: 10px;
 }
 
-#remove-website {
-    margin-left: auto;
+.remove-website {
+
 }
