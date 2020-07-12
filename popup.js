@@ -3,11 +3,17 @@ var websites = []; // Array of website URLS being tracked
 document.addEventListener("DOMContentLoaded", function() {
     loadWebsites();
 
+    document.getElementById("view-data").addEventListener("click", viewData); // View data button
     document.getElementById("reset").addEventListener("click", clearStorage); // Reset button
     document.getElementById("add-website").addEventListener("click", addWebsite); // Add website button
 });
 
-// Clears saved websites
+// Redirect to data.html
+function viewData(){
+    location.href = "data.html";
+}
+
+// Clear saved websites
 function clearStorage(){
     chrome.storage.sync.clear();
     websites = [];
@@ -16,19 +22,19 @@ function clearStorage(){
         message: "reset"
     });
 
-    document.getElementById("websites-tracked").innerHTML = '';
+    document.getElementById("websites-tracked").innerHTML = "";
     document.getElementById("input-error").innerHTML = "";
 }
 
-// Update times when pop-up is opened
+// Tells background.js to start loading process
 function loadWebsites(){
     chrome.runtime.sendMessage({
         message: "load"
     });
 }
 
-// Loads saved websites
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    // Loads saved websites
     if(request.message == "load"){
         chrome.storage.sync.get({websiteObjects:[]}, function(data){
             websiteObjects = data.websiteObjects;
@@ -39,6 +45,11 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                 websites.push(websiteObjects[i].url);
             }
         });
+    }
+
+    // Change the date shown
+    if(request.message == "change date"){
+        document.getElementById("today").innerHTML = "Today is " + request.date;
     }
 });
 
@@ -70,7 +81,6 @@ function addWebsite(){
             console.log(url + " was added");
         }else{
             errorMessage.innerHTML = "You are already tracking this site";
-            //document.getElementById("input-error").innerHTML = "You are already tracking this site";
         }
     } catch (error) {
         errorMessage.innerHTML = "Invalid URL";

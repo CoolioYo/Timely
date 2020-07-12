@@ -3,21 +3,22 @@ var websiteObjects = [];
 var currentTab = "empty url";
 var previousTab = "empty url";
 
-function Website(url, time, formattedTime, start) {
-    this.url = url;
-    this.time = time;
-    this.formattedTime = formattedTime;
-    this.start = start;
+var date;
+var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+class Website{
+    constructor(url, time, formattedTime, start){
+        this.url = url;
+        this.time = time;
+        this.formattedTime = formattedTime;
+        this.start = start;
+    }
 }
 
 // Saves websites array with chrome.storage
-function saveWebsites(callback){
-    chrome.storage.sync.set({websiteObjects}, function(){
-        if(typeof callback === 'function'){
-            //If there was no callback provided, don't try to call it.
-            callback();
-        }
-    });
+function saveWebsites(){
+    chrome.storage.sync.set({websiteObjects});
 }
 
 function startTimer(Website){
@@ -43,7 +44,7 @@ function stopTimer(Website){
     if(minutes > 0){
         time += minutes + "min "
     }
-    if(seconds > 0){
+    if(seconds > 0 && Website.time / 1000 < 60){
         time += seconds + "s"
     }
 
@@ -67,7 +68,31 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             }
         }
     }else if (request.message == "load"){
-        // Load data
+        // Update the date
+        if(date == null){
+            date = new Date();
+            date = days[date.getDay()] + ", " + months[date.getMonth()] + " " + date.getDate();
+
+            chrome.runtime.sendMessage({
+                message: "change date",
+                date: date
+            });
+
+        }else{
+            var currentDate = new Date();
+            currentDate = days[currentDate.getDay()] + ", " + months[currentDate.getMonth()] + " " + currentDate.getDate();
+
+            if(currentDate != date){
+                date = currentDate;
+            }
+
+            chrome.runtime.sendMessage({
+                message: "change date",
+                date: date
+            });
+        }
+
+        // Updates times for load
         var currentWebsite = getCurrentWebsite();
 
         if(currentWebsite != null){
@@ -82,6 +107,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 
     saveWebsites();
 
+    // Tells pop-up to start loading data
     if(request.message == "load"){
         chrome.runtime.sendMessage({
             message: "load"
