@@ -16,6 +16,10 @@ class Website{
     }
 }
 
+// Tracks time for all websites not being tracked
+var otherWebsites = new Website("Other", 0, "0s", 0);
+websiteObjects.push(otherWebsites);
+
 // Saves websites array with chrome.storage
 function saveWebsites(){
     chrome.storage.sync.set({websiteObjects});
@@ -98,17 +102,28 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         if(currentWebsite != null){
             stopTimer(currentWebsite);
             startTimer(currentWebsite);
+        }else{
+            if(otherTracked == true){
+                stopTimer(otherWebsites);
+                startTimer(otherWebsites);
+            }
         }
 
     }else if(request.message == "reset"){
         // Reset data
         websiteObjects = [];
+
+        otherWebsites = new Website("Other", 0, "0s", 0);
+        websiteObjects.push(otherWebsites);
+        otherTracked = false;
+
+        checkTab();
     }
 
     saveWebsites();
 
     // Tells pop-up to start loading data
-    if(request.message == "load"){
+    if(request.message == "load" || request.message == "reset"){
         chrome.runtime.sendMessage({
             message: "load"
         })
@@ -136,9 +151,13 @@ function getTabURL(callback){
     });
 }
 
+var otherTracked = false;
+
 // Check if the tab is being tracked
 function checkTab(){
     getTabURL(function(url) {
+        var found = false;
+
         // If the current tab is different from the previous tab
         if(currentTab != url){
             previousTab = currentTab;
@@ -148,16 +167,29 @@ function checkTab(){
             for(var i = 0; i < websiteObjects.length; i++){
                 if(websiteObjects[i].url == previousTab){
                     stopTimer(websiteObjects[i]);
+                    found = true;
                 }
             }
         }
 
+        if(!found && otherTracked == true){
+            stopTimer(otherWebsites);
+        }
+
         // Start timer if current tab is being tracked
+        found = false;
+
         for(var i = 0; i < websiteObjects.length; i++){
             if(websiteObjects[i].url == url){
                 startTimer(websiteObjects[i]);
+                found = true;
                 break;
             }
+        }
+
+        if(!found){
+            startTimer(otherWebsites);
+            otherTracked = true;
         }
 
         currentTab = url;

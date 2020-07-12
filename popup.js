@@ -93,46 +93,55 @@ function displayWebsite(url, formattedTime){
     container.classList.add("flex");
 
     var favicon = document.createElement("img"); // Favicon
-    favicon.src = "https://www.google.com/s2/favicons?domain="+url;
+    favicon.id = "favicon"+url;
+    if(url != "Other"){
+        favicon.src = "https://www.google.com/s2/favicons?domain="+url;
+    }else{
+        favicon.src = "icons/chrome-logo.svg";
+
+        var iconSize = 16;
+        favicon.setAttribute("width", iconSize);
+        favicon.setAttribute("height", iconSize);
+    }
     favicon.classList.add("website-favicon");
+    container.appendChild(favicon);
 
     var name = document.createElement("p"); // Website name
     name.appendChild(document.createTextNode(url));
     name.classList.add("website-name");
+    container.appendChild(name);
 
     var time = document.createElement("p"); // Time spent
     time.appendChild(document.createTextNode(formattedTime));
     time.classList.add("website-time");
-
-    var remove = document.createElement("button"); // Remove button
-    remove.appendChild(document.createTextNode("x"));
-    remove.classList.add("remove-website");
-
-    // Adding elements to container div
-    container.appendChild(favicon);
-    container.appendChild(name);
     container.appendChild(time);
-    container.appendChild(remove);
 
-    // Remove website from tracking list
-    remove.addEventListener("click", function () {
-        var toBeRemoved = this.parentElement.children[1].textContent; // Set to URL
-
-        for(var i = 0; i < websites.length; i++){
-            if(websites[i] == toBeRemoved){
-                console.log(toBeRemoved + " was removed");
-                chrome.runtime.sendMessage({
-                    message: "remove",
-                    sentURL: url
-                });
-
-                websites.splice(i, 1);
-                break;
+    if(url != "Other"){
+        var remove = document.createElement("button"); // Remove button
+        remove.appendChild(document.createTextNode("x"));
+        remove.classList.add("remove-website");
+        container.appendChild(remove);
+    
+        // Remove website from tracking list
+        remove.addEventListener("click", function () {
+            var toBeRemoved = this.parentElement.children[1].textContent; // Set to URL
+    
+            for(var i = 0; i < websites.length; i++){
+                if(websites[i] == toBeRemoved){
+                    console.log(toBeRemoved + " was removed");
+                    chrome.runtime.sendMessage({
+                        message: "remove",
+                        sentURL: url
+                    });
+    
+                    websites.splice(i, 1);
+                    break;
+                }
             }
-        }
-
-        this.parentNode.remove();
-    });
+    
+            this.parentNode.remove();
+        });
+    }
 
     // Adding container to pop-up
     var websitesTracked = document.getElementById("websites-tracked");
