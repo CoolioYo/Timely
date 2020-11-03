@@ -22,6 +22,7 @@ function clearStorage(){
         message: "reset"
     });
 
+    document.getElementById("total-time").innerHTML = "Total Time:";
     document.getElementById("websites-tracked").innerHTML = "";
     document.getElementById("input-error").innerHTML = "";
 }
@@ -44,6 +45,11 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                 displayWebsite(websiteObjects[i].url, websiteObjects[i].formattedTime);
                 websites.push(websiteObjects[i].url);
             }
+        });
+
+        chrome.storage.sync.get(['key'], function(data) {
+            totalTime = data.key;
+            document.getElementById("total-time").innerHTML = "Total Time: " + totalTime;
         });
     }
 

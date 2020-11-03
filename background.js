@@ -3,10 +3,12 @@ var websiteObjects = [];
 var currentTab = "empty url";
 var previousTab = "empty url";
 
+// For displaying dates
 var date;
 var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
+// For all websites
 class Website{
     constructor(url, time, formattedTime, start){
         this.url = url;
@@ -20,40 +22,65 @@ class Website{
 var otherWebsites = new Website("Other", 0, "0s", 0);
 websiteObjects.push(otherWebsites);
 
-// Saves websites array with chrome.storage
+// Tracks total time spent on Chrome
+var totalTime = formatTime(0);
+
+// Save to chrome.storage
 function saveWebsites(){
     chrome.storage.sync.set({websiteObjects});
 }
 
+function saveTotalTime(){
+    findTotalTime();
+
+    chrome.storage.sync.set({key: totalTime});
+}
+
+// Start timer for website
 function startTimer(Website){
     Website.start = new Date();
     console.log("*" + Website.url + " timer started");
 }
 
+// Stop timer for website
 function stopTimer(Website){
     Website.time += new Date() - Website.start;
 
-    // Format time
-    var seconds = Math.round(Website.time / 1000);
-    var minutes = Math.floor(seconds / 60);
-    var hours = Math.floor(minutes / 60);
-    minutes %= 60;
-    seconds %= 60;
+    Website.formattedTime = formatTime(Website.time);
+    console.log("*" + Website.url + ": " + Website.formattedTime);
+}
 
-    var time = "";
-
-    if(hours > 0){
-        time += hours + "hr "
-    }
-    if(minutes > 0){
-        time += minutes + "min "
-    }
-    if(seconds > 0 && Website.time / 1000 < 60){
-        time += seconds + "s"
+// Find total time spent on Chrome
+function findTotalTime(){
+    var total = 0;
+    for(var i = 0; i < websiteObjects.length; i++){
+        total += websiteObjects[i].time;
     }
 
-    Website.formattedTime = time;
-    console.log("*" + Website.url + ": " + time);
+    totalTime = formatTime(total);
+}
+
+// Format time in hours : minutes : seconds
+function formatTime(time){
+        var seconds = Math.round(time / 1000);
+        var minutes = Math.floor(seconds / 60);
+        var hours = Math.floor(minutes / 60);
+        minutes %= 60;
+        seconds %= 60;
+    
+        var fTime = "";
+    
+        if(hours > 0){
+            fTime += hours + "hr "
+        }
+        if(minutes > 0){
+            fTime += minutes + "min "
+        }
+        if(seconds > 0 && time / 1000 < 60){
+            fTime += seconds + "s"
+        }
+    
+        return fTime;
 }
 
 // Handle messages from popup.js
@@ -72,7 +99,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             }
         }
     }else if (request.message == "load"){
-        // Update the date
+        // Check the date
         if(date == null){
             date = new Date();
             date = days[date.getDay()] + ", " + months[date.getMonth()] + " " + date.getDate();
@@ -118,9 +145,12 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         otherTracked = false;
 
         checkTab();
+
+        totalTime = formatTime(0);
     }
 
     saveWebsites();
+    saveTotalTime();
 
     // Tells pop-up to start loading data
     if(request.message == "load" || request.message == "reset"){
