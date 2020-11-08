@@ -22,7 +22,7 @@ function clearStorage(){
         message: "reset"
     });
 
-    document.getElementById("total-time").innerHTML = "Total Time:";
+    document.getElementById("total-time").innerHTML = "Total Time: 0s";
     document.getElementById("websites-tracked").innerHTML = "";
     document.getElementById("input-error").innerHTML = "";
 }
